@@ -19,6 +19,13 @@ bool initialize_window(void) {
 		fprintf(stderr, "Error Initializing SDL.\n");
 		return false;
 	}
+
+	// Query for maximum resolution of monitor
+	SDL_DisplayMode display_mode;
+	SDL_GetCurrentDisplayMode(0, &display_mode);
+	window_width = display_mode.w;
+	window_height = display_mode.h;
+
 	// Create SDL Window	
 	window = SDL_CreateWindow(
 		NULL,                        // Window Title, NULL for no name
@@ -43,6 +50,7 @@ bool initialize_window(void) {
 		fprintf(stderr, "Error Creating SDL Renderer.\n");
 		return false;
 	}
+	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 	
 	return true;
 }
