@@ -20,12 +20,6 @@ bool initialize_window(void) {
 		return false;
 	}
 
-	// Query for maximum resolution of monitor
-	SDL_DisplayMode display_mode;
-	SDL_GetCurrentDisplayMode(0, &display_mode);
-	window_width = display_mode.w;
-	window_height = display_mode.h;
-
 	// Create SDL Window	
 	window = SDL_CreateWindow(
 		NULL,                        // Window Title, NULL for no name
@@ -33,7 +27,7 @@ bool initialize_window(void) {
 		SDL_WINDOWPOS_CENTERED,      // WINDOWPOS_CENTERED for center of monitor
 		window_width,                // Window Width
 		window_height,               // Window Height
-		SDL_WINDOW_BORDERLESS        // Any flags for display window, Borderless in this case
+		SDL_WINDOW_BORDERLESS 		 // Any flags for display window, Borderless in this case
 	);
 	if (!window) {
 		fprintf(stderr, "Error Creating SDL Window.\n");
