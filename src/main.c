@@ -86,7 +86,7 @@ void destroy_window(void) {
 }
 
 int main(void) {
-    is_running = initialize_window();
+	is_running = initialize_window();
 
 	setup();
 
