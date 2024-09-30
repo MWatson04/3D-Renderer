@@ -48,7 +48,9 @@ void update(void) {
 void render(void) {
 	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 	SDL_RenderClear(renderer);  // Put render color onto display window over everything that has been rendered
-
+	
+	draw_grid();
+	draw_pixel(20, 20, 0xFFFFFF00);
 	draw_rect(200, 200, 200, 100, 0xFFFF00FF);
 
 	render_color_buffer();	
