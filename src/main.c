@@ -68,7 +68,7 @@ void process_input(void) {
 // Takes 3D vector and returns projected 2D point
 vec2_t project(vec3_t point) {
 	vec2_t projected_point = {
-		.x = (fov_factor * point.x) / point.z,
+		.x = (fov_factor * point.x) / point.z, // Divide by point.z to properly determine the depth of each pixel
 		.y = (fov_factor * point.y) / point.z
 	};
 	return projected_point;
@@ -81,9 +81,9 @@ void update(void) {
 
 	for (int i = 0; i < N_POINTS; i++) {
 		vec3_t point = cube_points[i];
-		//vec3_t transformed_point = vec3_rotate_x(point, cube_rotation.x);
-		//transformed_point = vec3_rotate_y(transformed_point, cube_rotation.y);
-		//transformed_point = vec3_rotate_z(transformed_point, cube_rotation.z);
+		vec3_rotate_x(&point, cube_rotation.x);
+		vec3_rotate_y(&point, cube_rotation.y);
+		vec3_rotate_z(&point, cube_rotation.z);
 		
 		// Translate points away from camera	
 		point.z -= camera_position.z;
