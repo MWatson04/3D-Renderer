@@ -75,16 +75,17 @@ vec2_t project(vec3_t point) {
 }
 
 void update(void) {
-	cube_rotation.y += 0.1;
+	cube_rotation.y += 0.01;
 
 	for (int i = 0; i < N_POINTS; i++) {
 		vec3_t point = cube_points[i];
+		vec3_t transformed_point = vec3_rotate_y(point, cube_rotation.y);
 		
-		// Move points away from camera	
-		point.z -= camera_position.z;
+		// Translate points away from camera	
+		transformed_point.z -= camera_position.z;
 
 		// Convert 3D vector to 2D and store it in 2D array
-		vec2_t projected_point = project(point);
+		vec2_t projected_point = project(transformed_point);
 		projected_points[i] = projected_point;
 	}
 }
