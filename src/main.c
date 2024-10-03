@@ -16,6 +16,7 @@ vec3_t cube_rotation = { 0, 0, 0 };
 float fov_factor = 640.0;
 
 bool is_running = false;
+int previous_frame_time = 0;
 
 void setup(void) {
 	// Allocate memory to hold color buffer
@@ -69,15 +70,21 @@ void process_input(void) {
 vec2_t project(vec3_t point) {
 	vec2_t projected_point = {
 		.x = (fov_factor * point.x) / point.z, // Divide by point.z to properly determine the depth of each pixel
-		.y = (fov_factor * point.y) / point.z
+		.y = (fov_factor * point.y) / point.z  // As z gets smaller, the closer a pixel is placed to the center of the cube
 	};
 	return projected_point;
 }
 
 void update(void) {
-	cube_rotation.x += 0.01;
-	cube_rotation.y += 0.01;
-	cube_rotation.z += 0.01;
+	// Lock the execution of this function into this while loop if the current SDL 
+	// tick time doesn't equal how much time I want to pass (FRAME_TARGET_TIME)
+	while (!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + FRAME_TARGET_TIME));
+	previous_frame_time = SDL_GetTicks();
+
+	float rotation_speed = 0.01;
+	cube_rotation.x += rotation_speed;
+	cube_rotation.y += rotation_speed;
+	cube_rotation.z += rotation_speed;
 
 	for (int i = 0; i < N_POINTS; i++) {
 		vec3_t point = cube_points[i];
