@@ -76,10 +76,10 @@ vec2_t project(vec3_t point) {
 }
 
 void update(void) {
-	// Lock the execution of this function into this while loop if the current SDL 
-	// tick time doesn't equal how much time I want to pass (FRAME_TARGET_TIME)
-	while (!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + FRAME_TARGET_TIME));
 	previous_frame_time = SDL_GetTicks();
+	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
+		SDL_Delay(time_to_wait);
 
 	float rotation_speed = 0.01;
 	cube_rotation.x += rotation_speed;
