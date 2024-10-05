@@ -8,8 +8,8 @@
 
 triangle_t triangles_to_render[N_MESH_FACES];
 
-vec3_t camera_position = { .x = 0, .y = 0, .z = -5 };
-vec3_t cube_rotation = { .x = 0, .y = 0, .z = 0 };
+vec3_t camera_position = { 0, 0, -5 };
+vec3_t cube_rotation = { 0, 0, 0 };
 
 float fov_factor = 640;
 
@@ -19,7 +19,10 @@ int previous_frame_time = 0;
 void setup(void) {
     // Allocate the required memory in bytes to hold the color buffer
     color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
-
+	if (!color_buffer) {
+		fprintf(stderr, "Memory allocation for color buffer failed.\n");
+	}
+	
     // Creating a SDL texture that is used to display the color buffer
     color_buffer_texture = SDL_CreateTexture(
         renderer,
@@ -45,13 +48,11 @@ void process_input(void) {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Function that receives a 3D vector and returns a projected 2D point
-////////////////////////////////////////////////////////////////////////////////
+// Receive 3D vector and convert to 2D
 vec2_t project(vec3_t point) {
     vec2_t projected_point = {
-        .x = (fov_factor * point.x) / point.z,
-        .y = (fov_factor * point.y) / point.z
+        .x = (fov_factor * point.x) / point.z,  // Divide by point.z to properly determine the depth of each pixel
+        .y = (fov_factor * point.y) / point.z   // As z gets smaller, the closer a pixel is placed to the center of the cube
     };
     return projected_point;
 }
@@ -86,21 +87,21 @@ void update(void) {
         for (int j = 0; j < 3; j++) {
             vec3_t transformed_vertex = face_vertices[j];
 
-            transformed_vertex = vec3_rotate_x(transformed_vertex, cube_rotation.x);
-            transformed_vertex = vec3_rotate_y(transformed_vertex, cube_rotation.y);
-            transformed_vertex = vec3_rotate_z(transformed_vertex, cube_rotation.z);
+            vec3_rotate_x(&transformed_vertex, cube_rotation.x);
+            vec3_rotate_y(&transformed_vertex, cube_rotation.y);
+            vec3_rotate_z(&transformed_vertex, cube_rotation.z);
 
             // Translate the vertex away from the camera
             transformed_vertex.z -= camera_position.z;
 
             // Project the current vertex
-            vec2_t projected_point = project(transformed_vertex);
+            vec2_t projected_vertex = project(transformed_vertex);
 
             // Scale and translate the projected points to the middle of the screen
-            projected_point.x += (window_width / 2);
-            projected_point.y += (window_height / 2);
+            projected_vertex.x += (window_width / 2);
+            projected_vertex.y += (window_height / 2);
 
-            projected_triangle.points[j] = projected_point;
+            projected_triangle.points[j] = projected_vertex;
         }
 
         // Save the projected triangle in the array of triangles to render
@@ -113,14 +114,13 @@ void render(void) {
 
     // Loop all projected triangles and render them
     for (int i = 0; i < N_MESH_FACES; i++) {
-        triangle_t triangle = triangles_to_render[i];
-        draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFFFF00);
-        draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFFFF00);
-        draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFFFF00);
+        triangle_t current_triangle = triangles_to_render[i];
+        draw_rect(current_triangle.points[0].x, current_triangle.points[0].y, 3, 3, 0xFFFFFF00);
+        draw_rect(current_triangle.points[1].x, current_triangle.points[1].y, 3, 3, 0xFFFFFF00);
+        draw_rect(current_triangle.points[2].x, current_triangle.points[2].y, 3, 3, 0xFFFFFF00);
     }
 
     render_color_buffer();
-
     clear_color_buffer(0xFF000000);
 
     SDL_RenderPresent(renderer);
