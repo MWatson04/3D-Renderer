@@ -2,18 +2,12 @@
 #define MESH_H
 
 #include "vector.h"
+#include "triangle.h"
 
 #define N_MESH_VERTICES 8
+extern vec3_t mesh_vertices[N_MESH_VERTICES];
 
-vec3_t mesh_vertices[N_MESH_VERTICES] = {
-	{ -1, -1, -1 }, // 1
-	{ -1,  1, -1 }, // 2
-	{  1,  1, -1 }, // 3
-	{  1, -1, -1 }, // 4
-	{  1,  1,  1 }, // 5
-	{  1, -1,  1 }, // 6
-	{ -1,  1,  1 }, // 7
-	{ -1, -1,  1 }, // 8 
-};
+#define N_MESH_FACES (6 * 2) // 6 cube faces, 2 triangles per face
+extern face_t mesh_faces[N_MESH_FACES];
 
 #endif

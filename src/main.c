@@ -1,138 +1,143 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 #include "display.h"
 #include "vector.h"
+#include "mesh.h"
 
-// Declare array of vectors/points
-#define N_POINTS (9 * 9 * 9)
-vec3_t cube_points[N_POINTS]; // 9x9x9 cube
-vec2_t projected_points[N_POINTS];
+triangle_t triangles_to_render[N_MESH_FACES];
 
-vec3_t camera_position = { 0, 0, -5 };
-vec3_t cube_rotation = { 0, 0, 0 };
+vec3_t camera_position = { .x = 0, .y = 0, .z = -5 };
+vec3_t cube_rotation = { .x = 0, .y = 0, .z = 0 };
 
-float fov_factor = 640.0;
+float fov_factor = 640;
 
 bool is_running = false;
 int previous_frame_time = 0;
 
 void setup(void) {
-    // Allocate memory to hold color buffer
+    // Allocate the required memory in bytes to hold the color buffer
     color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
-	if (!color_buffer) {
-		fprintf(stderr, "Memory allocation for color buffer failed.\n");
-	}
 
-	// Create SDL Texture to display color buffer
-	color_buffer_texture = SDL_CreateTexture (
-		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		window_width,
-		window_height
-	);
-	if (!color_buffer_texture) {
-		fprintf(stderr, "Error Creating Color Buffer Texture.\n");
-	}
-
-	// Start loading array of vectors
-	// From -1 to 1 in 9x9x9 cube
-	int point_count = 0;
-
-	for (float x = -1; x <= 1; x += 0.25) {
-		for (float y = -1; y <= 1; y += 0.25) {
-			for (float z = -1; z <= 1; z += 0.25) {
-				vec3_t new_point = { .x = x, .y = y, .z = z };
-				cube_points[point_count++] = new_point;
-			}
-		}
-	}
+    // Creating a SDL texture that is used to display the color buffer
+    color_buffer_texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        window_width,
+        window_height
+    );
 }
 
 void process_input(void) {
-	SDL_Event event;
-	SDL_PollEvent(&event);
+    SDL_Event event;
+    SDL_PollEvent(&event);
 
-	switch (event.type) {
-		case SDL_QUIT:
-			is_running = false;
-			break;
-		case SDL_KEYDOWN:
-			if (event.key.keysym.sym == SDLK_ESCAPE) // keysym & sym = symbol
-				is_running = false;
-			break;
-	}
+    switch (event.type) {
+        case SDL_QUIT:
+            is_running = false;
+            break;
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym == SDLK_ESCAPE)
+                is_running = false;
+            break;
+    }
 }
 
-// Takes 3D vector and returns projected 2D point
+////////////////////////////////////////////////////////////////////////////////
+// Function that receives a 3D vector and returns a projected 2D point
+////////////////////////////////////////////////////////////////////////////////
 vec2_t project(vec3_t point) {
-	vec2_t projected_point = {
-		.x = (fov_factor * point.x) / point.z, // Divide by point.z to properly determine the depth of each pixel
-		.y = (fov_factor * point.y) / point.z  // As z gets smaller, the closer a pixel is placed to center of cube
-	};
-	return projected_point;
+    vec2_t projected_point = {
+        .x = (fov_factor * point.x) / point.z,
+        .y = (fov_factor * point.y) / point.z
+    };
+    return projected_point;
 }
 
 void update(void) {
-	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
-	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
-		SDL_Delay(time_to_wait);
+    // Wait some time until the reach the target frame time in milliseconds
+    int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+
+    // Only delay execution if we are running too fast
+    if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
+        SDL_Delay(time_to_wait);
+    }
+
     previous_frame_time = SDL_GetTicks();
 
-	float rotation_speed = 0.01;
-	cube_rotation.x += rotation_speed;
-	cube_rotation.y += rotation_speed;
-	cube_rotation.z += rotation_speed;
+    cube_rotation.x += 0.01;
+    cube_rotation.y += 0.01;
+    cube_rotation.z += 0.01;
 
-	for (int i = 0; i < N_POINTS; i++) {
-		vec3_t point = cube_points[i];
-		vec3_rotate_x(&point, cube_rotation.x);
-		vec3_rotate_y(&point, cube_rotation.y);
-		vec3_rotate_z(&point, cube_rotation.z);
+    // Loop all triangle faces of our mesh
+    for (int i = 0; i < N_MESH_FACES; i++) {
+        face_t mesh_face = mesh_faces[i];
 
-        // Translate points away from camera
-		point.z -= camera_position.z;
+        vec3_t face_vertices[3];
+        face_vertices[0] = mesh_vertices[mesh_face.a - 1];
+        face_vertices[1] = mesh_vertices[mesh_face.b - 1];
+        face_vertices[2] = mesh_vertices[mesh_face.c - 1];
 
-        // Convert 3D vector to 2D and store it in 2D array
-		vec2_t projected_point = project(point);
-		projected_points[i] = projected_point;
-	}
+        triangle_t projected_triangle;
+
+        // Loop all three vertices of this current face and apply transformations
+        for (int j = 0; j < 3; j++) {
+            vec3_t transformed_vertex = face_vertices[j];
+
+            transformed_vertex = vec3_rotate_x(transformed_vertex, cube_rotation.x);
+            transformed_vertex = vec3_rotate_y(transformed_vertex, cube_rotation.y);
+            transformed_vertex = vec3_rotate_z(transformed_vertex, cube_rotation.z);
+
+            // Translate the vertex away from the camera
+            transformed_vertex.z -= camera_position.z;
+
+            // Project the current vertex
+            vec2_t projected_point = project(transformed_vertex);
+
+            // Scale and translate the projected points to the middle of the screen
+            projected_point.x += (window_width / 2);
+            projected_point.y += (window_height / 2);
+
+            projected_triangle.points[j] = projected_point;
+        }
+
+        // Save the projected triangle in the array of triangles to render
+        triangles_to_render[i] = projected_triangle;
+    }
 }
 
 void render(void) {
-	draw_grid();
+    draw_grid();
 
-	for (int i = 0; i < N_POINTS; i++) {
-		vec2_t projected_point = projected_points[i];
-			draw_rect(
-			projected_point.x + (window_width / 2),
-			projected_point.y + (window_height / 2),
-			4,
-			4,
-			0xFFFFFF00
-		);
-	}
+    // Loop all projected triangles and render them
+    for (int i = 0; i < N_MESH_FACES; i++) {
+        triangle_t triangle = triangles_to_render[i];
+        draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFFFF00);
+        draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFFFF00);
+        draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFFFF00);
+    }
 
-	render_color_buffer();
-	clear_color_buffer(0xFF000000);
+    render_color_buffer();
 
-	SDL_RenderPresent(renderer);
+    clear_color_buffer(0xFF000000);
+
+    SDL_RenderPresent(renderer);
 }
 
 int main(void) {
-	is_running = initialize_window();
+    is_running = initialize_window();
 
-	setup();
+    setup();
 
-	while (is_running) {
-		process_input();
-		update();
-		render();
-	}
+    while (is_running) {
+        process_input();
+        update();
+        render();
+    }
 
-	destroy_window();
+    destroy_window();
 
-	return 0;
+    return 0;
 }
