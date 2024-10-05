@@ -1,0 +1,19 @@
+#ifndef MESH_H
+#define MESH_H
+
+#include "vector.h"
+
+#define N_MESH_VERTICES 8
+
+vec3_t mesh_vertices[N_MESH_VERTICES] = {
+	{ -1, -1, -1 }, // 1
+	{ -1,  1, -1 }, // 2
+	{  1,  1, -1 }, // 3
+	{  1, -1, -1 }, // 4
+	{  1,  1,  1 }, // 5
+	{  1, -1,  1 }, // 6
+	{ -1,  1,  1 }, // 7
+	{ -1, -1,  1 }, // 8 
+};
+
+#endif
