@@ -57,6 +57,27 @@ void draw_pixel(int x, int y, uint32_t color) {
     }
 }
 
+void draw_line(int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+
+    int side_length = abs(dx) >= abs(dy) ? abs(dx) : abs(dy);
+
+    // Find how much is needed to increment in x and y each step
+    float x_inc = dx / (float)side_length;
+    float y_inc = dy / (float)side_length;
+
+    // Get initial x and y values
+    float current_x = x0;
+    float current_y = y0;
+
+    for (int i = 0; i <= side_length; i++) {
+        draw_pixel(round(current_x), round(current_y), 0xFFFFFF00);
+        current_x += x_inc;
+        current_y += y_inc;
+    }
+}
+
 void draw_rect(int x, int y, int width, int height, uint32_t color) {
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {

@@ -22,5 +22,6 @@ void draw_rect(int x, int y, int width, int height, uint32_t color);
 void render_color_buffer(void); 
 void clear_color_buffer(uint32_t color);
 void destroy_window(void);
+void draw_line(int x0, int y0, int x1, int y1);
 
 #endif
