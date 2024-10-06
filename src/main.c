@@ -52,16 +52,16 @@ void process_input(void) {
 vec2_t project(vec3_t point) {
     vec2_t projected_point = {
         .x = (fov_factor * point.x) / point.z,  // Divide by point.z to properly determine the depth of each pixel
-        .y = (fov_factor * point.y) / point.z   // As z gets smaller, the closer a pixel is placed to the center of the cube
+        .y = (fov_factor * point.y) / point.z   // As z gets bigger, the closer a pixel is placed to center of cube
     };
     return projected_point;
 }
 
 void update(void) {
-    // Wait some time until the reach the target frame time in milliseconds
+    // Get the time to wait until FRAME_TARGET_TIME is met (in milliseconds)
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
 
-    // Only delay execution if we are running too fast
+    // Delay execution if FRAME_TARGET_TIME has not been met
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
         SDL_Delay(time_to_wait);
     }
