@@ -9,7 +9,7 @@
 
 triangle_t* triangles_to_render = NULL;
 
-vec3_t camera_position = { 0, 0, -5 };
+vec3_t camera_position = { 0, 0, 0 };
 
 float fov_factor = 640;
 
@@ -34,7 +34,7 @@ void setup(void) {
 
     // Load cube values into mesh data structure
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/f22.obj");
+    load_obj_file_data("./assets/cube.obj");
     if (!mesh.vertices || !mesh.faces) {
         fprintf(stderr, "Error Loading Mesh Data\n");
     }
@@ -94,7 +94,9 @@ void update(void) {
 
         triangle_t projected_triangle;
 
-        // Loop all three vertices of this current face and apply transformations
+        vec3_t transformed_vertices[3];
+
+        // Vertex transformations
         for (int j = 0; j < 3; j++) {
             vec3_t transformed_vertex = face_vertices[j];
 
@@ -103,10 +105,38 @@ void update(void) {
             vec3_rotate_z(&transformed_vertex, mesh.rotation.z);
 
             // Translate the vertex away from the camera
-            transformed_vertex.z -= camera_position.z;
+            transformed_vertex.z += 5;
 
+            transformed_vertices[j] = transformed_vertex;
+        }
+
+        // Backface culling
+        vec3_t vec_a = transformed_vertices[0];
+        vec3_t vec_b = transformed_vertices[1];
+        vec3_t vec_c = transformed_vertices[2];
+
+        // Vectors B-A and C-A
+        vec3_t vec_ba = vec3_sub(vec_b, vec_a);
+        vec3_t vec_ca = vec3_sub(vec_c, vec_a);
+
+        // Get face normal
+        vec3_t normal = vec3_cross(vec_ba, vec_ca);
+
+        // Find camera ray
+        vec3_t camera_ray = vec3_sub(camera_position, vec_a);
+
+        // Find dot product of normal and camera_ray (check alignment of camera_ray and normal)
+        float alignment = vec3_dot(normal, camera_ray);
+
+        // Skip loop iteration if the normal/camera_ray are facing opposite directions
+        if (alignment < 0) {
+            continue;
+        }
+
+        // Vertex projection
+        for (int j = 0; j < 3; j++) {
             // Project the current vertex
-            vec2_t projected_vertex = project(transformed_vertex);
+            vec2_t projected_vertex = project(transformed_vertices[j]);
 
             // Scale and translate the projected points to the middle of the screen
             projected_vertex.x += (window_width / 2);
