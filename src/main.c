@@ -118,6 +118,8 @@ void update(void) {
         // Vectors B-A and C-A
         vec3_t vec_ba = vec3_sub(vec_b, vec_a);
         vec3_t vec_ca = vec3_sub(vec_c, vec_a);
+        vec3_normalize(&vec_ba);
+        vec3_normalize(&vec_ca);
 
         // Get face normal
         vec3_t normal = vec3_cross(vec_ba, vec_ca);
