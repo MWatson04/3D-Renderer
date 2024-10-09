@@ -33,7 +33,8 @@ void setup(void) {
     );
 
     // Load cube values into mesh data structure
-    load_cube_mesh_data();
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/f22.obj");
     if (!mesh.vertices || !mesh.faces) {
         fprintf(stderr, "Error Loading Mesh Data\n");
     }
