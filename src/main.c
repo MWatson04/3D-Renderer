@@ -121,6 +121,7 @@ void update(void) {
 
         // Get face normal
         vec3_t normal = vec3_cross(vec_ba, vec_ca);
+        vec3_normalize(&normal);
 
         // Find camera ray
         vec3_t camera_ray = vec3_sub(camera_position, vec_a);
