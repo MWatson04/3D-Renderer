@@ -154,30 +154,40 @@ void update(void) {
 }
 
 void render(void) {
-    draw_grid();
+    draw_grid(0xFF3e3e3e);
   
     // Loop all projected triangles and render them
-    // int num_triangles = array_length(triangles_to_render);
-    // for (int i = 0; i < num_triangles; i++) {
-    //     triangle_t current_triangle = triangles_to_render[i];
+    int num_triangles = array_length(triangles_to_render);
+    for (int i = 0; i < num_triangles; i++) {
+        triangle_t current_triangle = triangles_to_render[i];
 
-    //     // Draw vertices
-    //     draw_rect(current_triangle.points[0].x, current_triangle.points[0].y, 3, 3, 0xFFFFFF00);
-    //     draw_rect(current_triangle.points[1].x, current_triangle.points[1].y, 3, 3, 0xFFFFFF00);
-    //     draw_rect(current_triangle.points[2].x, current_triangle.points[2].y, 3, 3, 0xFFFFFF00);
+        // Draw vertices
+        draw_rect(current_triangle.points[0].x, current_triangle.points[0].y, 3, 3, 0xFFFFFF00);
+        draw_rect(current_triangle.points[1].x, current_triangle.points[1].y, 3, 3, 0xFFFFFF00);
+        draw_rect(current_triangle.points[2].x, current_triangle.points[2].y, 3, 3, 0xFFFFFF00);
 
-    //     // Draw unfilled triangle
-    //     draw_triangle(
-    //         current_triangle.points[0].x,
-    //         current_triangle.points[0].y,
-    //         current_triangle.points[1].x,
-    //         current_triangle.points[1].y,
-    //         current_triangle.points[2].x,
-    //         current_triangle.points[2].y
-    //     );
-    // }
+        // Draw unfilled triangle
+        draw_triangle(
+            current_triangle.points[0].x,
+            current_triangle.points[0].y,
+            current_triangle.points[1].x,
+            current_triangle.points[1].y,
+            current_triangle.points[2].x,
+            current_triangle.points[2].y,
+            0xFF000000
+        );
 
-    draw_filled_triangle(200, 200, 400, 400, 100, 400);
+        // Draw filled triangle
+        draw_filled_triangle(
+            current_triangle.points[0].x,
+            current_triangle.points[0].y,
+            current_triangle.points[1].x,
+            current_triangle.points[1].y,
+            current_triangle.points[2].x,
+            current_triangle.points[2].y,
+            0xFFFFFFFF
+        );
+    }
 
     // Clear array of triangles
     array_free(triangles_to_render);
