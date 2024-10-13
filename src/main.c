@@ -10,15 +10,29 @@
 triangle_t* triangles_to_render = NULL;
 
 vec3_t camera_position = { 0, 0, 0 };
-
 float fov_factor = 640;
 
 bool is_running = false;
 int previous_frame_time = 0;
 
+enum cull_method {
+	CULL_NONE,
+	CULL_BACKFACE
+} cull_method;
+
+enum render_method {
+	RENDER_WIRE,
+	RENDER_WIRE_VERTEX,
+	RENDER_FILL_TRIANGLE,
+	RENDER_FILL_TRIANGLE_WIRE
+} render_method;
+
 void setup(void) {
-    // Allocate the required memory in bytes to hold the color buffer
-    color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
+    render_method = RENDER_WIRE;
+	cull_method = CULL_BACKFACE;
+
+	// Allocate the required memory in bytes to hold the color buffer
+    color_buffer = (color_t*) malloc(sizeof(color_t) * window_width * window_height);
 	if (!color_buffer) {
 		fprintf(stderr, "Memory allocation for color buffer failed.\n");
 	}
@@ -51,6 +65,18 @@ void process_input(void) {
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
                 is_running = false;
+			if (event.key.keysym.sym == SDLK_1)
+				render_method = RENDER_WIRE_VERTEX;
+			if (event.key.keysym.sym == SDLK_2)
+				render_method = RENDER_WIRE;
+			if (event.key.keysym.sym == SDLK_3)
+				render_method = RENDER_FILL_TRIANGLE;
+			if (event.key.keysym.sym == SDLK_4)
+				render_method = RENDER_FILL_TRIANGLE_WIRE;
+			if (event.key.keysym.sym == SDLK_c)
+				cull_method = CULL_BACKFACE;
+			if (event.key.keysym.sym == SDLK_d)
+				cull_method = CULL_NONE;	
             break;
     }
 }
@@ -110,30 +136,32 @@ void update(void) {
             transformed_vertices[j] = transformed_vertex;
         }
 
-        // Backface culling
-        vec3_t vec_a = transformed_vertices[0];
-        vec3_t vec_b = transformed_vertices[1];
-        vec3_t vec_c = transformed_vertices[2];
+        if (cull_method == CULL_BACKFACE) {
+            // Backface culling
+            vec3_t vec_a = transformed_vertices[0];
+            vec3_t vec_b = transformed_vertices[1];
+            vec3_t vec_c = transformed_vertices[2];
 
-        // Vectors B-A and C-A
-        vec3_t vec_ba = vec3_sub(vec_b, vec_a);
-        vec3_t vec_ca = vec3_sub(vec_c, vec_a);
-        vec3_normalize(&vec_ba);
-        vec3_normalize(&vec_ca);
+            // Vectors B-A and C-A
+            vec3_t vec_ba = vec3_sub(vec_b, vec_a);
+            vec3_t vec_ca = vec3_sub(vec_c, vec_a);
+            vec3_normalize(&vec_ba);
+            vec3_normalize(&vec_ca);
 
-        // Get face normal
-        vec3_t normal = vec3_cross(vec_ba, vec_ca);
-        vec3_normalize(&normal);
+            // Get face normal
+            vec3_t normal = vec3_cross(vec_ba, vec_ca);
+            vec3_normalize(&normal);
 
-        // Find camera ray
-        vec3_t camera_ray = vec3_sub(camera_position, vec_a);
+            // Find camera ray
+            vec3_t camera_ray = vec3_sub(camera_position, vec_a);
 
-        // Find dot product of normal and camera_ray (check alignment of camera_ray and normal)
-        float alignment = vec3_dot(normal, camera_ray);
+            // Find dot product of normal and camera_ray (check alignment of camera_ray and normal)
+            float alignment = vec3_dot(normal, camera_ray);
 
-        // Skip loop iteration if the normal/camera_ray are facing opposite directions
-        if (alignment < 0) {
-            continue;
+            // Skip loop iteration if the normal/camera_ray are facing opposite directions
+            if (alignment < 0) {
+                continue;
+            }
         }
 
         // Vertex projection
@@ -161,32 +189,38 @@ void render(void) {
     for (int i = 0; i < num_triangles; i++) {
         triangle_t current_triangle = triangles_to_render[i];
 
-        // Draw vertices
-        draw_rect(current_triangle.points[0].x, current_triangle.points[0].y, 3, 3, 0xFFFFFF00);
-        draw_rect(current_triangle.points[1].x, current_triangle.points[1].y, 3, 3, 0xFFFFFF00);
-        draw_rect(current_triangle.points[2].x, current_triangle.points[2].y, 3, 3, 0xFFFFFF00);
+        // Draw triangle vertices
+        if (render_method == RENDER_WIRE_VERTEX) {
+            draw_rect(current_triangle.points[0].x - 3, current_triangle.points[0].y - 3, 6, 6, 0xFFFF0000);
+            draw_rect(current_triangle.points[1].x - 3, current_triangle.points[1].y - 3, 6, 6, 0xFFFF0000);
+            draw_rect(current_triangle.points[2].x - 3, current_triangle.points[2].y - 3, 6, 6, 0xFFFF0000);
+        }
 
         // Draw unfilled triangle
-        draw_triangle(
-            current_triangle.points[0].x,
-            current_triangle.points[0].y,
-            current_triangle.points[1].x,
-            current_triangle.points[1].y,
-            current_triangle.points[2].x,
-            current_triangle.points[2].y,
-            0xFF000000
-        );
+        if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE) {
+            draw_triangle(
+                current_triangle.points[0].x,
+                current_triangle.points[0].y,
+                current_triangle.points[1].x,
+                current_triangle.points[1].y,
+                current_triangle.points[2].x,
+                current_triangle.points[2].y,
+                0xFFFFFFFF
+            );
+        }
 
         // Draw filled triangle
-        draw_filled_triangle(
-            current_triangle.points[0].x,
-            current_triangle.points[0].y,
-            current_triangle.points[1].x,
-            current_triangle.points[1].y,
-            current_triangle.points[2].x,
-            current_triangle.points[2].y,
-            0xFFFFFFFF
-        );
+        if (render_method == RENDER_FILL_TRIANGLE || render_method == RENDER_FILL_TRIANGLE_WIRE) {
+            draw_filled_triangle(
+                current_triangle.points[0].x,
+                current_triangle.points[0].y,
+                current_triangle.points[1].x,
+                current_triangle.points[1].y,
+                current_triangle.points[2].x,
+                current_triangle.points[2].y,
+                0xFF555555
+            );
+        }
     }
 
     // Clear array of triangles
